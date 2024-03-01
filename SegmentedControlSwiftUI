@@ -1,0 +1,73 @@
+import Foundation
+import SnapKit
+import SwiftUI
+
+// generic segmented control for swiftUI
+// You can also use NSlayoutContraint instead of snapkit 
+struct SegmentedControlWrapper: UIViewRepresentable {
+    var items: [String]
+    var width: CGFloat
+    @Binding var selectedIndex: Int
+
+    func makeUIView(context: Context) -> UIView {
+        let switchModeSegmentedControlContainer = UIView()
+
+        let switchModeSegmentedControl = with(UISegmentedControl(items: [items[0], items[1]])) {
+            $0.set(appFont: .poppins(.semiBold(size: 14)), colorStyle: .grayed, state: .normal)
+            $0.set(appFont: .poppins(.semiBold(size: 14)), colorStyle: .regular, state: .selected)
+            $0.selectedSegmentIndex = 0
+        }
+
+        switchModeSegmentedControlContainer.addSubview(switchModeSegmentedControl)
+
+        switchModeSegmentedControlContainer.snp.makeConstraints { make in
+            make.height.equalTo(44)
+            make.width.equalTo(width)
+        }
+
+        switchModeSegmentedControl.snp.makeConstraints { make in
+            make.leading.trailing.equalToSuperview()
+            make.height.equalTo(44)
+            make.bottom.equalToSuperview()
+        }
+
+        switchModeSegmentedControl.addTarget(context.coordinator, action: 
+                                                #selector(Coordinator.selectionChanged(_:)),
+                                             for: .valueChanged)
+        switchModeSegmentedControlContainer.isUserInteractionEnabled = true
+        return switchModeSegmentedControlContainer
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        guard let segmentedControl = uiView.subviews.first as? UISegmentedControl else { return }
+        segmentedControl.selectedSegmentIndex = selectedIndex
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject {
+        var parent: SegmentedControlWrapper
+
+        init(_ segmentedControlWrapper: SegmentedControlWrapper) {
+            parent = segmentedControlWrapper
+        }
+
+        @objc func selectionChanged(_ sender: UISegmentedControl) {
+            parent.selectedIndex = sender.selectedSegmentIndex
+        }
+    }
+}
+
+extension UISegmentedControl {
+    /// set titles attributes for control state
+    /// - Parameters:
+    ///   - appFont: type of app font
+    ///   - colorStyle: type of app color style
+    ///   - state: state of segmented control for which attributes should be set
+    func set(appFont: UIFont, colorStyle: UIColor = .white, state: UIControl.State) {
+        setTitleTextAttributes([NSAttributedString.Key.font: appFont.font,
+                                NSAttributedString.Key.foregroundColor: colorStyle.textColor], for: state)
+    }
+}
